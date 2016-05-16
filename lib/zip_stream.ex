@@ -1,7 +1,7 @@
 defmodule ZipStream do
   defmodule Error do defexception [:message] end
 
-  defp zip(z,:header,<<0x50,0x4b,0x03,0x04,_vers::16,_::3,descriptor?::1,_::12,compression::16-little,_other::8*8,
+  defp zip(z,:header,<<0x50,0x4b,0x03,0x04,_vers::16,_::4,descriptor?::1,_::11,compression::16-little,_other::8*8,
       binsize::32-little,_ressize::32-little,namelen::16-little,extralen::16-little,
       name::binary-size(namelen),_extra::binary-size(extralen),
       rest::binary>>, acc) do
