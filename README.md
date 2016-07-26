@@ -3,7 +3,7 @@
 [Continuous Integration]: http://travis-ci.org/awetzel/zip_stream "Build status by Travis-CI"
 
 Library to read zip file in a stream.
-Zip file binary stream -> stream of {:new_file,name} or uncompressed_bin
+Zip file binary stream -> stream of {:new_file,name} or uncompressed_bin or :nomore_files
 
 Erlang zlib library only allows deflate decompress stream.  But
 Erlang zip library does not allow content streaming.
@@ -16,9 +16,10 @@ use the stream to do:
 ```elixir
 File.stream!("myfile.zip", [], 500)
 |> ZipStream.unzip
-|> Stream.reduce(nil,fn 
+|>Enum.reduce(nil,fn 
   {:new_file,name},_current->name
-  binary,file_name->
+  :nomore_files,_current->nil
+  binary_chunk,file_name->
     #DO SOMTHING WITH the binary chunk of file_name
     file_name
 end)
@@ -26,12 +27,13 @@ end)
 
 An other example: your zip contains only one file, in this case you
 can simply do the following to get a standard binary stream of this
-on file. (drop the `{:new_file,_}` of the single file)
+on file. (drop the `{:new_file,_}` of the single file, and the last `:nomore_files` atom)
 
 ```elixir
 binstream = File.stream!("myfile.zip", [], 500)
 |> ZipStream.unzip
 |> Stream.drop(1)
+|> Stream.drop(-1)
 ```
 
 ## Known Limitations
