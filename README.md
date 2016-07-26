@@ -1,7 +1,9 @@
-# ZipStream
+# ZipStream [![Build Status](https://api.travis-ci.org/awetzel/zip_stream.svg)][Continuous Integration]
+
+[Continuous Integration]: http://travis-ci.org/awetzel/zip_stream "Build status by Travis-CI"
 
 Library to read zip file in a stream.
-Zip file binary stream -> stream of {:new_file,name} or uncompressed_bin
+Zip file binary stream -> stream of {:new_file,name} or uncompressed_bin or :nomore_files
 
 Erlang zlib library only allows deflate decompress stream.  But
 Erlang zip library does not allow content streaming.
