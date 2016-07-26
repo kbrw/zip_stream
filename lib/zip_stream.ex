@@ -11,7 +11,7 @@ defmodule ZipStream do
     :zlib.inflateInit(z,-15)
     zip(z,:data,binsize,rest, name, [[{:new_file,name}]|acc])
   end
-  defp zip(z,:header,<<0x50,0x4b,0x01,0x02,_::binary>>=bin,acc), do: {endacc(acc),{z,:nomore_files}}
+  defp zip(z,:header,<<0x50,0x4b,0x01,0x02,_::binary>>=bin,acc), do: {endacc([[:nomore_files] | acc]),{z,:nomore_files}}
   defp zip(z,:header,bin,acc), do: {endacc(acc),{z,{:inheader,bin}}}
 
   defp zip(z,:data,0,rest, _, acc), do: zip(z,:header,rest,acc)
