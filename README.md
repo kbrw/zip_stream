@@ -1,6 +1,6 @@
-# ZipStream [![Build Status](https://api.travis-ci.org/awetzel/zip_stream.svg)][Continuous Integration]
+# ZipStream [![Build Status](https://api.travis-ci.org/kbrw/zip_stream.svg)][Continuous Integration]
 
-[Continuous Integration]: http://travis-ci.org/awetzel/zip_stream "Build status by Travis-CI"
+[Continuous Integration]: http://travis-ci.org/kbrw/zip_stream "Build status by Travis-CI"
 
 Library to read zip file in a stream.
 Zip file binary stream -> stream of {:new_file,name} or uncompressed_bin
