@@ -5,24 +5,37 @@ defmodule ZipStream do
       binsize::32-little,_ressize::32-little,namelen::16-little,extralen::16-little,
       name::binary-size(namelen),_extra::binary-size(extralen),
       rest::binary>>, acc) do
-    if compression != 8, do: raise Error, message: "ZipStream only handle deflate compression, zip file unsupported"
+    compression = case compression do
+      0 -> :store
+      8 -> :zlib.inflateInit(z,-15); :deflate
+      _ ->raise Error, message: "ZipStream only handles store and deflate compression, zip file unsupported"
+    end
     if descriptor? == 1, do: raise Error, message: "ZipStream does not support zip file with data descriptor"
     if binsize == 0xffffffff, do: raise Error, message: "ZipStream does not support zip64 files yet"
-    :zlib.inflateInit(z,-15)
-    zip(z,:data,binsize,rest, name, [[{:new_file,name}]|acc])
+    zip(z,:data,binsize,rest, name,compression, [[{:new_file,name}]|acc])
   end
   defp zip(z,:header,<<0x50,0x4b,0x01,0x02,_::binary>>=_bin,acc), do: {endacc(acc),{z,:nomore_files}}
   defp zip(z,:header,bin,acc), do: {endacc(acc),{z,{:inheader,bin}}}
 
-  defp zip(z,:data,0,rest, _, acc), do: zip(z,:header,rest,acc)
-  defp zip(z,:data,remsize,"", data_name, acc), do: {endacc(acc),{z,{:indata,data_name,remsize}}}
-  defp zip(z,:data,remsize,bin, data_name, acc) do
+  defp zip(z,:data,0,rest, _, _, acc), do: zip(z,:header,rest,acc)
+  defp zip(z,:data,remsize,"", data_name, compression, acc), do: {endacc(acc),{z,{:indata,data_name,compression,remsize}}}
+  defp zip(z,:data,remsize,bin, data_name, compression, acc) do
     case bin do
       <<content::binary-size(remsize), rest::binary>>-> 
-        inflated=:zlib.inflate(z,content); :zlib.inflateEnd(z)
-        zip(z,:header,rest,[inflated|acc])
+        case compression do
+          :deflate ->
+            inflated=:zlib.inflate(z,content); :zlib.inflateEnd(z)
+            zip(z,:header,rest,[inflated|acc])
+          :store ->
+            zip(z,:header,rest,[[content]|acc])
+        end
       <<content_part::binary>>->
-        {endacc([:zlib.inflate(z,content_part)|acc]),{z,{:indata,data_name,remsize-byte_size(content_part)}}}
+        case compression do
+          :deflate ->
+            {endacc([:zlib.inflate(z,content_part)|acc]),{z,{:indata,data_name,compression,remsize-byte_size(content_part)}}}
+          :store ->
+            {endacc([[content_part]|acc]),{z,{:indata,data_name,compression,remsize-byte_size(content_part)}}}
+        end
     end
   end
   defp endacc(acc), do: (acc |> Enum.reverse |> Stream.concat)
@@ -33,7 +46,7 @@ defmodule ZipStream do
       fn
         _,{z,:nomore_files}-> {:halt,{z,:nomore_files}}
         bin,{z,{:inheader,tail}}-> zip(z,:header,tail<>bin,[])
-        bin,{z,{:indata,data_name,remsize}}-> zip(z,:data,remsize,bin,data_name,[])
+        bin,{z,{:indata,data_name,compression,remsize}}-> zip(z,:data,remsize,bin,data_name,compression,[])
       end,
       fn {z,_}->:zlib.close(z) end
     )
