@@ -16,7 +16,7 @@ use the stream to do:
 ```elixir
 File.stream!("myfile.zip", [], 500)
 |> ZipStream.unzip
-|> Stream.reduce(nil,fn 
+|> Stream.transform(nil,fn 
   {:new_file,name},_current->name
   binary,file_name->
     #DO SOMTHING WITH the binary chunk of file_name
