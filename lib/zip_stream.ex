@@ -8,7 +8,7 @@ defmodule ZipStream do
     compression = case compression do
       0 -> :store
       8 -> :zlib.inflateInit(z,-15); :deflate
-      _ ->raise Error, message: "ZipStream only handles store and deflate compression, zip file unsupported"
+      _ -> raise Error, message: "ZipStream only handles store and deflate compression, zip file unsupported"
     end
     if descriptor? == 1, do: raise Error, message: "ZipStream does not support zip file with data descriptor"
     if binsize == 0xffffffff, do: raise Error, message: "ZipStream does not support zip64 files yet"
